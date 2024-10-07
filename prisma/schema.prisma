@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  ACTIVE
+  PENDING
+  INACTIVE
+}
+
+model Rol {
+  id     BigInt    @id @default(autoincrement())
+  name   String    @db.VarChar(191)
+  status Boolean   @default(false)
+  user User[]
+}
+
+model User {
+  id              String   @id @db.VarChar(255)
+  rolId           BigInt      @unique
+  name            String   @db.VarChar(191)
+  walletAddress   String   @db.VarChar(191)
+  percentage      Float
+  code            String   @db.VarChar(10)
+  status         Boolean  @default(false)
+  email           String   @unique @db.VarChar(191)
+  emailVerifiedAt DateTime? @db.Timestamp(0)
+  password        String   @db.VarChar(191)
+  createdAt       DateTime @db.Timestamp(0)
+  updatedAt       DateTime @db.Timestamp(0)
+  rol   Rol       @relation(fields: [rolId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  groupUsers      GroupUser[]
+  userRewards     UserReward[]
+  UserRewardTickets     UserRewardTicket[]
+}
+
+model Group {
+  id          String      @id @db.VarChar(255)
+  name        String      @db.VarChar(191)
+  percentage  String      @db.VarChar(191)
+  buyedReward String      @db.VarChar(191)
+  code        String      @db.VarChar(10)
+  status      Boolean     @default(false)
+  createdAt   DateTime    @db.Timestamp(0)
+  updatedAt   DateTime    @db.Timestamp(0)
+  groupUsers  GroupUser[]
+  userRewards UserReward[]
+}
+
+model GroupUser {
+  id          String   @id @db.VarChar(255)
+  userId      String   @db.VarChar(255)
+  groupId     String   @db.VarChar(255)
+  percentage  String   @db.VarChar(191)
+  createdAt   DateTime @db.Timestamp(0)
+  updatedAt   DateTime @db.Timestamp(0)
+
+  user   User   @relation(fields: [userId], references: [id])
+  group  Group  @relation(fields: [groupId], references: [id])
+}
+
+model Ticket {
+  id            String   @id @db.VarChar(255)
+  deposit       Float
+  delivery      Float
+  discount      Float
+  nameBuyed     String   @db.VarChar(191)
+  walletBuyed   String   @db.VarChar(191)
+  code          String   @db.VarChar(191)
+  status        Status   @default(PENDING)
+  file          String   @db.VarChar(191)
+  createdAt     DateTime @db.Timestamp(0)
+  updatedAt     DateTime @db.Timestamp(0)
+  UserRewardTickets   UserRewardTicket[]
+}
+
+model UserRewardTicket {
+  id         String   @id @db.VarChar(255)
+  userId     String   @db.VarChar(255)
+  ticketId   String   @db.VarChar(255)
+  percentage Float
+  createdAt  DateTime @db.Timestamp(0)
+  updatedAt  DateTime @db.Timestamp(0)
+
+  user   User   @relation(fields: [userId], references: [id])
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+}
+
+model TotalReservedStake {
+  id           String   @id @db.VarChar(255)
+  wallet       String   @db.VarChar(191)
+  totalStaking String   @db.Text
+  lastClaimed  DateTime @db.Timestamp(0)
+  totalClaimed String?  @db.Text
+  status       Status   @default(ACTIVE)
+  createdAt    DateTime @db.Timestamp(0)
+  updatedAt    DateTime @db.Timestamp(0)
+}
+
+model GeneralReward {
+  id         String   @id @db.VarChar(255)
+  percentage Float
+  status     String   @default("active") @db.VarChar(191)
+  createdAt  DateTime @db.Timestamp(0)
+  updatedAt  DateTime @db.Timestamp(0)
+}
+
+model UserReward {
+  id            String   @id @db.VarChar(255)
+  userId        String   @db.VarChar(255)
+  groupId       String?  @db.VarChar(255)
+  walletBuyed   String   @db.VarChar(191)
+  reward        Float
+  claimedReward Float
+  status        Status   @default(PENDING)
+  createdAt     DateTime @db.Timestamp(0)
+  updatedAt     DateTime @db.Timestamp(0)
+  type          String   @db.VarChar(191)
+
+  user   User   @relation(fields: [userId], references: [id])
+  group  Group? @relation(fields: [groupId], references: [id])
+}
